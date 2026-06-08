@@ -1,0 +1,94 @@
+<mujoco model="g1_29dof_revo2 sim scene">
+  <include file="g1_revo2.xml"/>
+
+  <!-- implicitfast keeps the joint damping stable; plain Euler does not -->
+  <option integrator="implicitfast"/>
+
+  <statistic center="0 0 0.5" extent="2.0"/>
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20" offwidth="1280" offheight="1280"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+  </worldbody>
+
+  <!-- Revo2 is under-actuated: each finger's distal joint follows its proximal
+       (tendon-like) via an equality constraint. The thumb's distal follows the
+       thumb proximal 1:1; the four fingers' distals close a bit further than
+       their proximals (ratio = distal_range / proximal_range = 1.63 / 1.41). -->
+  <equality>
+    <joint joint1="left_thumb_distal_joint"  joint2="left_thumb_proximal_joint"  polycoef="0 1.0  0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="left_index_distal_joint"  joint2="left_index_proximal_joint"  polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="left_middle_distal_joint" joint2="left_middle_proximal_joint" polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="left_ring_distal_joint"   joint2="left_ring_proximal_joint"   polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="left_pinky_distal_joint"  joint2="left_pinky_proximal_joint"  polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="right_thumb_distal_joint"  joint2="right_thumb_proximal_joint"  polycoef="0 1.0  0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="right_index_distal_joint"  joint2="right_index_proximal_joint"  polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="right_middle_distal_joint" joint2="right_middle_proximal_joint" polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="right_ring_distal_joint"   joint2="right_ring_proximal_joint"   polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+    <joint joint1="right_pinky_distal_joint"  joint2="right_pinky_proximal_joint"  polycoef="0 1.156 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.001"/>
+  </equality>
+
+  <actuator>
+    <!-- ── 29 body motors: direct-drive torque (driven by WBC PD via rt/lowcmd) ── -->
+    <motor name="left_hip_pitch_joint" joint="left_hip_pitch_joint" ctrlrange="-88 88"/>
+    <motor name="left_hip_roll_joint" joint="left_hip_roll_joint" ctrlrange="-139 139"/>
+    <motor name="left_hip_yaw_joint" joint="left_hip_yaw_joint" ctrlrange="-88 88"/>
+    <motor name="left_knee_joint" joint="left_knee_joint" ctrlrange="-139 139"/>
+    <motor name="left_ankle_pitch_joint" joint="left_ankle_pitch_joint" ctrlrange="-35 35"/>
+    <motor name="left_ankle_roll_joint" joint="left_ankle_roll_joint" ctrlrange="-35 35"/>
+    <motor name="right_hip_pitch_joint" joint="right_hip_pitch_joint" ctrlrange="-88 88"/>
+    <motor name="right_hip_roll_joint" joint="right_hip_roll_joint" ctrlrange="-139 139"/>
+    <motor name="right_hip_yaw_joint" joint="right_hip_yaw_joint" ctrlrange="-88 88"/>
+    <motor name="right_knee_joint" joint="right_knee_joint" ctrlrange="-139 139"/>
+    <motor name="right_ankle_pitch_joint" joint="right_ankle_pitch_joint" ctrlrange="-35 35"/>
+    <motor name="right_ankle_roll_joint" joint="right_ankle_roll_joint" ctrlrange="-35 35"/>
+    <motor name="waist_yaw_joint" joint="waist_yaw_joint" ctrlrange="-88 88"/>
+    <motor name="waist_roll_joint" joint="waist_roll_joint" ctrlrange="-35 35"/>
+    <motor name="waist_pitch_joint" joint="waist_pitch_joint" ctrlrange="-35 35"/>
+    <motor name="left_shoulder_pitch_joint" joint="left_shoulder_pitch_joint" ctrlrange="-25 25"/>
+    <motor name="left_shoulder_roll_joint" joint="left_shoulder_roll_joint" ctrlrange="-25 25"/>
+    <motor name="left_shoulder_yaw_joint" joint="left_shoulder_yaw_joint" ctrlrange="-25 25"/>
+    <motor name="left_elbow_joint" joint="left_elbow_joint" ctrlrange="-25 25"/>
+    <motor name="left_wrist_roll_joint" joint="left_wrist_roll_joint" ctrlrange="-25 25"/>
+    <motor name="left_wrist_pitch_joint" joint="left_wrist_pitch_joint" ctrlrange="-5 5"/>
+    <motor name="left_wrist_yaw_joint" joint="left_wrist_yaw_joint" ctrlrange="-5 5"/>
+    <motor name="right_shoulder_pitch_joint" joint="right_shoulder_pitch_joint" ctrlrange="-25 25"/>
+    <motor name="right_shoulder_roll_joint" joint="right_shoulder_roll_joint" ctrlrange="-25 25"/>
+    <motor name="right_shoulder_yaw_joint" joint="right_shoulder_yaw_joint" ctrlrange="-25 25"/>
+    <motor name="right_elbow_joint" joint="right_elbow_joint" ctrlrange="-25 25"/>
+    <motor name="right_wrist_roll_joint" joint="right_wrist_roll_joint" ctrlrange="-25 25"/>
+    <motor name="right_wrist_pitch_joint" joint="right_wrist_pitch_joint" ctrlrange="-5 5"/>
+    <motor name="right_wrist_yaw_joint" joint="right_wrist_yaw_joint" ctrlrange="-5 5"/>
+
+    <!-- ── 12 Revo2 finger motors: position servos (driven by rt/brainco/*/cmd) ──
+         6 per hand, in BrainCo motor order [thumb, thumb-aux, index, middle,
+         ring, pinky]. "thumb" = metacarpal (opposition, range ~1.57); the four
+         finger motors + thumb-aux each drive a proximal joint whose distal is
+         coupled by the equalities above. Command is normalized [0,1]
+         (0 = open, 1 = closed); modinoid_sim de-normalizes to these ctrlranges. -->
+    <position name="left_thumb_metacarpal_joint" joint="left_thumb_metacarpal_joint" kp="20" kv="0.5" ctrlrange="0.0 1.57" forcerange="-10 10"/>
+    <position name="left_thumb_proximal_joint"   joint="left_thumb_proximal_joint"   kp="20" kv="0.5" ctrlrange="0.0 1.03" forcerange="-10 10"/>
+    <position name="left_index_proximal_joint"   joint="left_index_proximal_joint"   kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="left_middle_proximal_joint"  joint="left_middle_proximal_joint"  kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="left_ring_proximal_joint"    joint="left_ring_proximal_joint"    kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="left_pinky_proximal_joint"   joint="left_pinky_proximal_joint"   kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="right_thumb_metacarpal_joint" joint="right_thumb_metacarpal_joint" kp="20" kv="0.5" ctrlrange="0.0 1.57" forcerange="-10 10"/>
+    <position name="right_thumb_proximal_joint"   joint="right_thumb_proximal_joint"   kp="20" kv="0.5" ctrlrange="0.0 1.03" forcerange="-10 10"/>
+    <position name="right_index_proximal_joint"   joint="right_index_proximal_joint"   kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="right_middle_proximal_joint"  joint="right_middle_proximal_joint"  kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="right_ring_proximal_joint"    joint="right_ring_proximal_joint"    kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+    <position name="right_pinky_proximal_joint"   joint="right_pinky_proximal_joint"   kp="18" kv="0.5" ctrlrange="0.0 1.41" forcerange="-10 10"/>
+  </actuator>
+</mujoco>

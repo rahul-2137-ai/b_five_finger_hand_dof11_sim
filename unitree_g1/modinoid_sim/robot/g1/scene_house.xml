@@ -1,0 +1,182 @@
+<mujoco model="g1_house_3room_reallife">
+  <include file="g1_29dof_3d.xml" />
+
+
+<!-- g1_29dof_with_hand.xml -->
+<!-- g1_29dof_with_hand_rev_1_0_activatedfinger.xml -->
+  <!--
+    SPAWN ROOMS  (set spawn_room = 1/2/3 in SimLoopConfig):
+      stand_room1  →  Room 1  front  (X=3.2  Y=2.0   Z=0.843)
+      stand_room2  →  Room 2  middle (X=3.2  Y=7.9   Z=0.843)
+      stand_room3  →  Room 3  back   (X=3.2  Y=12.9  Z=0.843)
+
+    FIX NOTE:
+      Free-joint qpos = ABSOLUTE world coordinates, NOT relative to body pos.
+      Format: [x y z  qw qx qy qz  <43 joint angles>]
+      qw MUST be 1.0 (not 0!) — zero quaternion causes:
+        "Found zero norm quaternions in quat" → sim closes immediately.
+      Z = 0.843 = pelvis standing height 0.793 + interior floor 0.05
+  -->
+
+  <default>
+    <geom friction="1.0" />
+  </default>
+
+  <statistic center="3.2 2.0 1.0" extent="8.0" />
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.4 0.4 0.4" specular="0 0 0" />
+    <rgba haze="0.15 0.25 0.35 1" />
+    <global azimuth="-150" elevation="-25" />
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.45 0.62 0.82" rgb2="0.05 0.05 0.1"
+      width="512" height="3072" />
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge"
+      rgb1="0.28 0.38 0.22" rgb2="0.18 0.28 0.14"
+      markrgb="0.55 0.55 0.55" width="300" height="300" />
+    <texture type="2d" name="wall_tex"      builtin="flat"    rgb1="0.90 0.86 0.78" width="512" height="512" />
+    <texture type="2d" name="floor_tex"     builtin="checker" rgb1="0.80 0.67 0.50" rgb2="0.68 0.55 0.38" width="512" height="512" />
+    <texture type="2d" name="doorframe_tex" builtin="flat"    rgb1="0.30 0.18 0.08" width="128" height="128" />
+    <texture type="2d" name="table_tex"     builtin="flat"    rgb1="0.60 0.40 0.20" width="512" height="512" />
+    <texture type="2d" name="cube_tex"      builtin="flat"    rgb1="0.18 0.68 0.72" width="512" height="512" />
+
+    <material name="groundplane" texture="groundplane"   texuniform="true" texrepeat="10 10" reflectance="0.08" />
+    <material name="wall"        texture="wall_tex"      texuniform="true"                   reflectance="0.04" />
+    <material name="floor_mat"   texture="floor_tex"     texuniform="true" texrepeat="8 20"  reflectance="0.12" />
+    <material name="doorframe"   texture="doorframe_tex" texuniform="true"                   reflectance="0.10" />
+    <material name="table"       texture="table_tex"     texuniform="true"                   reflectance="0.10" />
+    <material name="cube"        texture="cube_tex"      texuniform="true"                   reflectance="0.18" />
+  </asset>
+
+  <worldbody>
+
+    <light name="sun" pos="8 -8 15" dir="-0.4 0.6 -1" directional="true"
+      diffuse="0.75 0.72 0.65" specular="0.08 0.08 0.08" castshadow="true" />
+
+    <!-- Outdoor ground plane at Z=0 -->
+    <geom name="ground" size="0 0 0.05" type="plane" material="groundplane" />
+
+    <!-- ============================================================ HOUSE -->
+    <body name="house" pos="2.5 0 0">
+
+      <!-- Interior floor, top surface Z=0.05 -->
+      <geom name="house_floor" type="box" pos="3.2 7.7 0.025" size="3.2 7.7 0.025" material="floor_mat" />
+
+      <!-- Outer walls -->
+      <geom name="left_wall"  type="box" pos="0.1  7.7 1.5" size="0.1 7.7 1.5" material="wall" />
+      <geom name="right_wall" type="box" pos="6.3  7.7 1.5" size="0.1 7.7 1.5" material="wall" />
+      <geom name="back_wall"  type="box" pos="3.2 15.3 1.5" size="3.2 0.1 1.5" material="wall" />
+
+      <!-- Front wall with entrance door -->
+      <geom name="front_L"      type="box" pos="1.325 0.1 1.5" size="1.125 0.1 1.5" material="wall" />
+      <geom name="front_R"      type="box" pos="5.075 0.1 1.5" size="1.125 0.1 1.5" material="wall" />
+      <geom name="front_lintel" type="box" pos="3.2   0.1 2.6"  size="3.2   0.1 0.4" material="wall" />
+      <geom name="main_jamb_L"  type="box" pos="2.38 0.1 1.1"  size="0.07 0.14 1.1"  material="doorframe" />
+      <geom name="main_jamb_R"  type="box" pos="4.02 0.1 1.1"  size="0.07 0.14 1.1"  material="doorframe" />
+      <geom name="main_header"  type="box" pos="3.2  0.1 2.27" size="0.82 0.14 0.07" material="doorframe" />
+      <geom name="main_sill"    type="box" pos="3.2  0.1 0.03" size="0.82 0.14 0.03" material="doorframe" />
+
+      <!-- Dividing wall Room1 to Room2 (Y=5.3) -->
+      <geom name="div12_L"      type="box" pos="1.45 5.3 1.5"   size="1.25 0.1 1.5"   material="wall" />
+      <geom name="div12_R"      type="box" pos="4.95 5.3 1.5"   size="1.25 0.1 1.5"   material="wall" />
+      <geom name="div12_lintel" type="box" pos="3.2  5.3 2.55"  size="3.2  0.1 0.45"  material="wall" />
+      <geom name="d12_jamb_L"   type="box" pos="2.63 5.3 1.05"  size="0.07 0.13 1.05" material="doorframe" />
+      <geom name="d12_jamb_R"   type="box" pos="3.77 5.3 1.05"  size="0.07 0.13 1.05" material="doorframe" />
+      <geom name="d12_header"   type="box" pos="3.2  5.3 2.17"  size="0.57 0.13 0.07" material="doorframe" />
+
+      <!-- Dividing wall Room2 to Room3 (Y=10.5) -->
+      <geom name="div23_L"      type="box" pos="1.45 10.5 1.5"  size="1.25 0.1 1.5"   material="wall" />
+      <geom name="div23_R"      type="box" pos="4.95 10.5 1.5"  size="1.25 0.1 1.5"   material="wall" />
+      <geom name="div23_lintel" type="box" pos="3.2  10.5 2.55" size="3.2  0.1 0.45"  material="wall" />
+      <geom name="d23_jamb_L"   type="box" pos="2.63 10.5 1.05" size="0.07 0.13 1.05" material="doorframe" />
+      <geom name="d23_jamb_R"   type="box" pos="3.77 10.5 1.05" size="0.07 0.13 1.05" material="doorframe" />
+      <geom name="d23_header"   type="box" pos="3.2  10.5 2.17" size="0.57 0.13 0.07" material="doorframe" />
+
+      <!-- Ceiling lights -->
+      <light name="light_r1" pos="3.2  2.7  3.0" dir="0 0 -1" directional="false" diffuse="0.95 0.92 0.85" attenuation="0 0.1 0.3" />
+      <light name="light_r2" pos="3.2  7.9  3.0" dir="0 0 -1" directional="false" diffuse="0.95 0.92 0.85" attenuation="0 0.1 0.3" />
+      <light name="light_r3" pos="3.2 12.9  3.0" dir="0 0 -1" directional="false" diffuse="0.95 0.92 0.85" attenuation="0 0.1 0.3" />
+    </body>
+
+    <!-- ============================================================ ROOM 1
+         Table at X=4.8 → robot at X=3.2 has clear standing space -->
+    <body name="table_r1" pos="4.8 2.7 0.0">
+      <geom name="top_r1"  type="box" pos="0 0 0.77"       size="0.60 0.35 0.02"  material="table" />
+      <geom name="leg1_r1" type="box" pos=" 0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg2_r1" type="box" pos="-0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg3_r1" type="box" pos=" 0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg4_r1" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+    </body>
+
+    <!-- pos="4.8 2.4 0.825"  train-->
+    <!-- test pos="5.0 2.5 0.825">-->
+    <body name="cube_r1" pos="4.8 2.4 0.825">
+      <joint type="free" damping="0.0005" name="cube_joint_r1" />
+      <geom name="cube_geom_r1" type="box" size="0.035 0.035 0.035" material="cube"
+        solimp="0.998 0.998 0.001" solref="0.001 2" density="100" friction="0.95 0.3 0.1" />
+    </body>
+
+   
+    <!-- ============================================================ ROOM 2 -->
+    <body name="table_r2" pos="4.8 7.9 0.0">
+      <geom name="top_r2"  type="box" pos="0 0 0.77"       size="0.60 0.35 0.02"  material="table" />
+      <geom name="leg1_r2" type="box" pos=" 0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg2_r2" type="box" pos="-0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg3_r2" type="box" pos=" 0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg4_r2" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+    </body>
+    <body name="cube_r2" pos="4.8 7.9 0.825">
+      <joint type="free" damping="0.0005" name="cube_joint_r2" />
+      <geom name="cube_geom_r2" type="box" size="0.035 0.035 0.035" material="cube"
+        solimp="0.998 0.998 0.001" solref="0.001 2" density="100" friction="0.95 0.3 0.1" />
+    </body>
+
+    <!-- ============================================================ ROOM 3 -->
+    <body name="table_r3" pos="4.8 12.9 0.0">
+      <geom name="top_r3"  type="box" pos="0 0 0.77"       size="0.60 0.35 0.02"  material="table" />
+      <geom name="leg1_r3" type="box" pos=" 0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg2_r3" type="box" pos="-0.55  0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg3_r3" type="box" pos=" 0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+      <geom name="leg4_r3" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
+    </body>
+    <body name="cube_r3" pos="4.8 12.9 0.825">
+      <joint type="free" damping="0.0005" name="cube_joint_r3" />
+      <geom name="cube_geom_r3" type="box" size="0.035 0.035 0.035" material="cube"
+        solimp="0.998 0.998 0.001" solref="0.001 2" density="100" friction="0.95 0.3 0.1" />
+    </body>
+
+  </worldbody>
+
+  <!-- ================================================================
+       KEYFRAMES
+       Free-joint qpos = ABSOLUTE world position (NOT relative to body pos).
+       Format: [x  y  z  qw qx qy qz  joint_1 ... joint_43]
+
+       x   = 3.2   (house centre width)
+       z   = 0.843 (pelvis height 0.793 + interior floor top 0.05)
+       qw  = 1.0   ← MUST be 1, never 0!  (zero quaternion = crash)
+       qx/qy/qz = 0.0  (upright, facing +Y into the house)
+       43 zeros = nominal standing joint angles
+  ================================================================ -->
+  <!-- <keyframe> -->
+
+    <!-- ROOM 1  front room   Y=2.0  (1.3 m clear of front wall) -->
+    <!-- <key name="stand_room1" -->
+      <!-- qpos="3.2 2.0 0.843  1.0 0.0 0.0 0.0 -->
+            <!-- 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" /> -->
+
+    <!-- ROOM 2  middle room  Y=7.9 -->
+    <!-- <key name="stand_room2" -->
+      <!-- qpos="3.2 7.9 0.843  1.0 0.0 0.0 0.0 -->
+            <!-- 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" /> -->
+
+    <!-- ROOM 3  back room    Y=12.9 -->
+    <!-- <key name="stand_room3" -->
+      <!-- qpos="3.2 12.9 0.843  1.0 0.0 0.0 0.0 -->
+            <!-- 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" /> -->
+
+  <!-- </keyframe> -->
+
+</mujoco>

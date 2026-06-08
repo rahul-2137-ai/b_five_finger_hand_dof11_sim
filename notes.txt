@@ -1,0 +1,2 @@
+conda create -y -n b_hand_sim python=3.10
+conda activate b_hand_sim

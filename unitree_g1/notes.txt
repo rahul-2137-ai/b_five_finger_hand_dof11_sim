@@ -1,0 +1,2 @@
+cd /mnt/drive2/unitree_g1_5_finger/unitree_g1/inspire
+DISPLAY=:1 python3 view_inspire_hands.py
