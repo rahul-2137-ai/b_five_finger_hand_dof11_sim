@@ -2,21 +2,15 @@
   <include file="g1_revo2.xml"/>
 
   <!-- implicitfast keeps the joint damping stable; plain Euler does not.
-       elliptic cones: single conic friction constraint per contact (needed for the
-       contact-rich house scene: jug + glass + water particles + grasping). -->
+       elliptic cones: single conic friction constraint per contact (good for the
+       contact-rich grasping of the two cubes). -->
   <option integrator="implicitfast" cone="elliptic"/>
 
-  <!-- Collision-filter classes for the jug/glass/water world.
-       bit 0 = robot/world, bit 1 = water world.
-       container sees both; water_particle sees container only. -->
+  <!-- Default geom friction = [sliding, torsional, rolling].
+       1.0 sliding gives a firm grip; torsional/rolling stay at MuJoCo's
+       realistic small defaults. Applies to the hands and the robot body. -->
   <default>
-    <geom friction="1.0"/>
-    <default class="container">
-      <geom contype="3" conaffinity="3"/>
-    </default>
-    <default class="water_particle">
-      <geom contype="2" conaffinity="0"/>
-    </default>
+    <geom friction="1.0 0.005 0.0001"/>
   </default>
 
   <statistic center="3.2 2.0 1.0" extent="8.0"/>
@@ -233,9 +227,9 @@
       <geom name="leg4_r1" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
     </body>
     <body name="cube_r1" pos="4.4 2.9 0.825">
-      <joint type="free" damping="0.0005" name="cube_joint_r1" />
+      <joint type="free" armature="0" damping="0" name="cube_joint_r1" />
       <geom name="cube_geom_r1" type="box" size="0.035 0.035 0.035" material="cube"
-        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="0.95 0.3 0.1" />
+        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="1.0 0.005 0.0001" />
     </body>
 
     <!-- ============================================================ ROOM 2 -->
@@ -247,9 +241,9 @@
       <geom name="leg4_r2" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
     </body>
     <body name="cube_r2" pos="4.8 7.9 0.825">
-      <joint type="free" damping="0.0005" name="cube_joint_r2" />
+      <joint type="free" armature="0" damping="0" name="cube_joint_r2" />
       <geom name="cube_geom_r2" type="box" size="0.035 0.035 0.035" material="cube"
-        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="0.95 0.3 0.1" />
+        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="1.0 0.005 0.0001" />
     </body>
 
     <!-- ============================================================ ROOM 3 -->
@@ -261,72 +255,31 @@
       <geom name="leg4_r3" type="box" pos="-0.55 -0.30 0.375" size="0.03 0.03 0.375" material="table" />
     </body>
     <body name="cube_r3" pos="4.8 12.9 0.825">
-      <joint type="free" damping="0.0005" name="cube_joint_r3" />
+      <joint type="free" armature="0" damping="0" name="cube_joint_r3" />
       <geom name="cube_geom_r3" type="box" size="0.035 0.035 0.035" material="cube"
-        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="0.95 0.3 0.1" />
+        solimp="0.99 0.995 0.001" solref="0.004 1" density="100" friction="1.0 0.005 0.0001" />
     </body>
 
-    <!-- =========================================================== ROOM 1 — JUG + GLASS + WATER
-         Sits on table_r1 (top at z=0.79). Pour task: grasp jug handle on -x face,
-         lift, wrist-roll +90° → spout pours into glass. -->
-    <body name="jug" pos="4.78 2.55 0.86">
-      <joint type="free" damping="0.0005" name="jug_joint" />
-      <geom name="jug_base"   type="box" class="container" pos="0 0 -0.0625"
-            size="0.0450 0.0450 0.0050"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_wall_xp" type="box" class="container" pos=" 0.0425 0      0.0050"
-            size="0.0025 0.0450 0.0625"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_wall_xn" type="box" class="container" pos="-0.0425 0      0.0050"
-            size="0.0025 0.0450 0.0625"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_wall_yp" type="box" class="container" pos=" 0      0.0425 0.0050"
-            size="0.0450 0.0025 0.0625"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_wall_yn" type="box" class="container" pos=" 0     -0.0425 0.0050"
-            size="0.0450 0.0025 0.0625"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_spout"   type="box" class="container" pos=" 0.0575 0      0.0500"
-            size="0.0150 0.0050 0.0050"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_handle_top"   type="box" class="container" pos="-0.0750 0  0.0535"
-            size="0.0300 0.0150 0.0150"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_handle_bot"   type="box" class="container" pos="-0.0750 0 -0.0335"
-            size="0.0300 0.0150 0.0150"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
-      <geom name="jug_handle_outer" type="box" class="container" pos="-0.1200 0  0.0100"
-            size="0.0150 0.0150 0.0585"
-            rgba="0.78 0.45 0.20 1" density="500" friction="1.0 0.3 0.1" />
+    <!-- =========================================================== ROOM 1 — TWO GRASP CUBES
+         Both sit on table_r1 (top at z=0.79).
+           big_cube   : 0.22 m cube, light box — pick up with BOTH hands.
+           small_cube : 0.03 m cube — pinch with two fingers (thumb + index).
+         Realistic friction: sliding 1.0 (grip), torsional 0.005, rolling 0.0001. -->
+    <body name="big_cube" pos="4.77 2.74 0.90">
+      <joint type="free" armature="0" damping="0" name="big_cube_joint" />
+      <geom name="big_cube_geom" type="box" size="0.11 0.11 0.11"
+            rgba="0.85 0.55 0.25 1" density="80"
+            friction="1.0 0.005 0.0001"
+            solimp="0.99 0.995 0.001" solref="0.004 1" />
     </body>
 
-    <body name="glass" pos="4.98 2.55 0.79">
-      <joint type="free" damping="0.0005" name="glass_joint" />
-      <geom name="glass_bottom" type="cylinder" class="container" pos="0 0 0.0025"
-            size="0.0300 0.0025"
-            rgba="0.55 0.85 0.95 0.45" density="800" friction="1.0 0.3 0.1" />
-      <replicate count="8" euler="0 0 0.7854">
-        <geom name="glass_wall" type="box" class="container" pos="0.0275 0 0.0500"
-              size="0.0025 0.0120 0.0450"
-              rgba="0.55 0.85 0.95 0.45" density="800" friction="1.0 0.3 0.1" />
-      </replicate>
+    <body name="small_cube" pos="4.98 2.50 0.805">
+      <joint type="free" armature="0" damping="0" name="small_cube_joint" />
+      <geom name="small_cube_geom" type="box" size="0.015 0.015 0.015"
+            rgba="0.20 0.60 0.90 1" density="700"
+            friction="1.0 0.005 0.0001"
+            solimp="0.99 0.995 0.001" solref="0.004 1" />
     </body>
-
-    <!-- 12 water-particle spheres in a 3×2×2 grid inside the jug cavity. -->
-    <replicate count="2" offset="0 0 0.022" sep="_z">
-      <replicate count="2" offset="0 0.022 0" sep="_y">
-        <replicate count="3" offset="0.020 0 0" sep="_x">
-          <body name="water" pos="4.760 2.539 0.815">
-            <joint type="free" name="water_joint" damping="0.04" />
-            <geom name="water_geom" type="sphere" size="0.006"
-                  class="water_particle"
-                  rgba="0.20 0.55 0.95 0.85"
-                  density="200" friction="0.2 0.05 0.05"
-                  solimp="0.80 0.90 0.002" solref="0.025 1" />
-          </body>
-        </replicate>
-      </replicate>
-    </replicate>
 
   </worldbody>
 
@@ -399,11 +352,10 @@
        SPAWN KEYFRAME (for the viewer; modinoid_sim uses FIX_STAND + the
        pelvis pose in g1_revo2.xml instead). Robot stands in front of
        table_r1 facing the room. qpos = base(7) + 51 robot joints +
-       3 cubes(7) + jug(7) + glass(7); water particles inherit their
-       template pose (MuJoCo pads the rest of qpos automatically).
+       3 room cubes(7) + big_cube(7) + small_cube(7); MuJoCo pads the rest.
   ================================================================ -->
   <keyframe>
     <key name="home_front_table"
-         qpos="4 2.6 0.843 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4.4 2.9 0.825 1 0 0 0 4.8 7.9 0.825 1 0 0 0 4.8 12.9 0.825 1 0 0 0 4.78 2.55 0.86 1 0 0 0 4.98 2.55 0.79 1 0 0 0" />
+         qpos="4.75 2.2 0.9 0.747602 0 0 0.664147 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4.4 2.9 0.825 1 0 0 0 4.8 7.9 0.825 1 0 0 0 4.8 12.9 0.825 1 0 0 0 4.77 2.74 0.90 1 0 0 0 4.98 2.50 0.805 1 0 0 0" />
   </keyframe>
 </mujoco>

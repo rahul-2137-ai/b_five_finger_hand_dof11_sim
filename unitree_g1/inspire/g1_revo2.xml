@@ -76,7 +76,7 @@
     <mesh name="right_pinky_touch_link" content_type="model/stl" file="revo2_right_hand/right_pinky_touch_link.STL" />
   </asset>
   <worldbody>
-    <body name="pelvis" pos="4.75 2.2 0.9" quat="0.747602 0 0 0.664147">
+    <body name="pelvis" pos="4.75 2.2 0.84" quat="0.747602 0 0 0.664147">
       <site name="imu" size="0.01" pos="-0.03959 -0.00224 0.13792" />
       <inertial pos="0 0 -0.07605" quat="1 0 -0.000399148 0" mass="3.813" diaginertia="0.010549 0.0093089 0.0079184" />
       <joint name="floating_base_joint" type="free" limited="false" actuatorfrclimited="false" />
