@@ -447,6 +447,14 @@ class ModinoidSimEnv:
                 self.right_hand_actuator_index
             ].copy()
 
+            # Variable-impedance grip controller (see apply_variable_impedance).
+            # Off by default — enable with HAND_VARIABLE_IMPEDANCE: True.
+            self.var_impedance = self.config.get("HAND_VARIABLE_IMPEDANCE", False)
+            if self.var_impedance:
+                self._init_variable_impedance()
+        else:
+            self.var_impedance = False
+
         # ── Build torque_limit indexed by MuJoCo actuator ID ─────────────
         # The config's motor_effort_limit_list is laid out in WBC config order
         # (legs, waist, L-arm, L-hand, R-arm, R-hand).  Self.torques is indexed
@@ -941,6 +949,86 @@ class ModinoidSimEnv:
         right[:len(rn)] = rn
         return left, right
 
+    # ── Variable-impedance grip controller (BrainCo / Inspire fingers) ───
+    # The five-finger hands are MuJoCo <position> servos: the force each finger
+    # applies is f = kp*(target - q) - kv*qvel, with kp fixed in the XML. When a
+    # finger closes onto an object its angle q stops at the surface; if the
+    # commanded target sits right at that surface the position error -> 0, so the
+    # grip force -> 0 and the object slips out. A *fixed* high kp is no good
+    # either — it makes the approach stiff and bats light objects away on first
+    # contact.
+    #
+    # This controller varies each finger's stiffness with its grasp state:
+    #   • free / still tracking target  -> nominal (compliant) kp  [gentle approach]
+    #   • stalled against an object      -> ramp kp up to kp_max    [firm clamp]
+    # "Stalled" = the servo still wants to close (target - q > err_thresh) but the
+    # finger has stopped moving (|qvel| < vel_thresh) — i.e. it is pressing on
+    # something. A first-order ramp on a per-finger activation in [0,1] keeps the
+    # stiffness change smooth (no contact chatter). Damping kv is scaled with
+    # sqrt(kp) to stay near-critically damped as stiffness rises.
+
+    def _init_variable_impedance(self):
+        """Cache nominal finger servo gains and per-finger grip state."""
+        self._vi_act_index = np.concatenate(
+            (self.left_hand_actuator_index, self.right_hand_actuator_index)
+        ).astype(np.intp)
+        self._vi_qposadr = np.concatenate(
+            (self.left_hand_qposadr, self.right_hand_qposadr)
+        ).astype(np.intp)
+        self._vi_dofadr = np.concatenate(
+            (self.left_hand_dofadr, self.right_hand_dofadr)
+        ).astype(np.intp)
+
+        # Nominal stiffness/damping read straight from the XML position servos:
+        #   gainprm = [kp, 0, 0],  biasprm = [0, -kp, -kv]
+        self._vi_kp_min = self.mj_model.actuator_gainprm[self._vi_act_index, 0].copy()
+        self._vi_kv_nom = -self.mj_model.actuator_biasprm[self._vi_act_index, 2].copy()
+        factor = float(self.config.get("HAND_GRIP_KP_FACTOR", 4.0))
+        self._vi_kp_max = self._vi_kp_min * factor
+
+        # Per-finger grip activation in [0,1] (filtered) + tuning thresholds.
+        self._vi_grip = np.zeros(len(self._vi_act_index), dtype=np.float64)
+        self._vi_err_thresh = float(self.config.get("HAND_GRIP_ERR_THRESH", 0.04))
+        self._vi_vel_thresh = float(self.config.get("HAND_GRIP_VEL_THRESH", 0.5))
+        self._vi_ramp_up = float(self.config.get("HAND_GRIP_RAMP_UP", 0.10))
+        self._vi_ramp_down = float(self.config.get("HAND_GRIP_RAMP_DOWN", 0.05))
+
+        print(
+            f"[VarImpedance] enabled on {len(self._vi_act_index)} finger servos: "
+            f"kp {self._vi_kp_min.min():.0f}-{self._vi_kp_min.max():.0f} (nominal) -> "
+            f"up to {self._vi_kp_max.max():.0f} (clamped) when loaded."
+        )
+
+    def apply_variable_impedance(self):
+        """Modulate finger-servo stiffness from per-finger grasp state.
+
+        Rewrites the actuator gain/bias params in place each step so the existing
+        BrainCo/Inspire position-target pipeline is untouched — only the stiffness
+        of the f = kp*(target - q) - kv*qvel law changes.
+        """
+        act = self._vi_act_index
+        q = self.mj_data.qpos[self._vi_qposadr]
+        dq = self.mj_data.qvel[self._vi_dofadr]
+        target = self.mj_data.ctrl[act]
+
+        err = target - q                                # >0 → finger wants to close more
+        loaded = (err > self._vi_err_thresh) & (np.abs(dq) < self._vi_vel_thresh)
+
+        # First-order ramp toward 1 (loaded) / 0 (free) — smooth, no chatter.
+        self._vi_grip += np.where(
+            loaded,
+            self._vi_ramp_up * (1.0 - self._vi_grip),
+            -self._vi_ramp_down * self._vi_grip,
+        )
+        np.clip(self._vi_grip, 0.0, 1.0, out=self._vi_grip)
+
+        kp_eff = self._vi_kp_min + (self._vi_kp_max - self._vi_kp_min) * self._vi_grip
+        kv_eff = self._vi_kv_nom * np.sqrt(kp_eff / np.maximum(self._vi_kp_min, 1e-6))
+
+        self.mj_model.actuator_gainprm[act, 0] = kp_eff
+        self.mj_model.actuator_biasprm[act, 1] = -kp_eff
+        self.mj_model.actuator_biasprm[act, 2] = -kv_eff
+
     def build_lidar_message(self):
         """Build a laserscan dictionary from the current lidar sensor readings."""
         if not self.have_lidar:
@@ -1236,6 +1324,12 @@ class ModinoidSimEnv:
                 if len(self.right_hand_actuator_index) > 0:
                     k = len(right_t)
                     self.mj_data.ctrl[self.right_hand_actuator_index[:k]] = right_t
+
+            # Variable-impedance grip: adapt finger stiffness to grasp state so
+            # a stalled-against-object finger clamps firmly (anti-slip) while a
+            # free finger stays compliant. Runs every step on the latest ctrl.
+            if self.var_impedance:
+                self.apply_variable_impedance()
 
         # Disable sensor computation to skip 2880 rangefinder raycasts (~18ms)
         # Sensors are re-enabled on-demand in the run() loop only on lidar publish steps

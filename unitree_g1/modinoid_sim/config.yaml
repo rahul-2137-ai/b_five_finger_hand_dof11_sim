@@ -13,6 +13,19 @@ ROBOT_SCENE: "../inspire/revo2_house_sim.xml"
 # rt/brainco/{left,right}/state); "dex3" = the original 7-DoF Dex3 hands.
 HAND_TYPE: "brainco"
 
+# ── Variable-impedance grip controller (BrainCo / Inspire fingers) ──────────
+# The five-finger hands are position servos: grip force = kp*(target - q). A
+# target at the object surface gives ~zero grip, so heavy objects slip. When
+# enabled, each finger's stiffness is raised toward kp*HAND_GRIP_KP_FACTOR while
+# it is stalled against an object (position error > ERR_THRESH and |vel| <
+# VEL_THRESH), and stays at the compliant nominal kp during free motion.
+HAND_VARIABLE_IMPEDANCE: True
+HAND_GRIP_KP_FACTOR: 4.0     # max stiffness multiple when fully clamping
+HAND_GRIP_ERR_THRESH: 0.04   # rad — position error above which a finger is "pressing"
+HAND_GRIP_VEL_THRESH: 0.5    # rad/s — below this a pressing finger counts as stalled
+HAND_GRIP_RAMP_UP: 0.10      # per-step activation ramp toward firm grip
+HAND_GRIP_RAMP_DOWN: 0.05    # per-step activation decay back to compliant
+
 # Hold the floating base upright above the world origin (the robot spawns at
 # pelvis pos 0 0 0.793). Without a WBC driving the legs, this keeps it standing.
 ELASTIC_BAND_POINT: [0.0, 0.0, 1.0]

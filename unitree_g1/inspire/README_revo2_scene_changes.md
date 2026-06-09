@@ -47,6 +47,31 @@ raise it if you want a heavier object.
 
 ---
 
+## 2b. Mass of every object (measured from the compiled model)
+
+**Movable / graspable bodies** (these are what the hands interact with):
+
+| Object | Full size | Density | **Mass** |
+|--------|-----------|--------:|---------:|
+| `big_cube`  | 0.22 m cube | 80 kg/m³  | **851.8 g** |
+| `small_cube`| 0.03 m cube | 700 kg/m³ | **18.9 g** |
+| `cube_r1` (Room 1) | 0.07 m cube | 100 kg/m³ | **34.3 g** |
+| `cube_r2` (Room 2) | 0.07 m cube | 100 kg/m³ | **34.3 g** |
+| `cube_r3` (Room 3) | 0.07 m cube | 100 kg/m³ | **34.3 g** |
+| **all free objects total** | | | **≈ 973.6 g** |
+
+**Robot** (pelvis subtree, G1 + two Revo2 hands): **34.03 kg total**
+— each hand ≈ 373.6 g (152 g of finger links + 221.6 g base); per-link masses are
+in `README_revo2_hand.md` §3b.
+
+**Static structure** (fixed to the world, infinite effective mass — listed only
+for completeness; they never move and their mass has no dynamic effect):
+the `house` body (walls/floor/furniture) computes to ~45,455 kg, and the three
+`table_r*` bodies are likewise static. To change an object's mass, edit its
+`density` (mass = density × volume) — e.g. big_cube 0.22³ × 80 ≈ 0.852 kg.
+
+---
+
 ## 3. Friction values — OLD vs NEW
 
 MuJoCo friction is a 3-vector: **`[sliding, torsional, rolling]`**.

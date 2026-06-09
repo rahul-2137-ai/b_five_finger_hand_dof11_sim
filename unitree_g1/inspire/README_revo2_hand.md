@@ -100,6 +100,28 @@ through that joint regardless of the servo output.
 
 ---
 
+## 3b. Link masses (per hand)
+
+From the URDF inertials (identical left/right). One hand = **base + 11 links**.
+
+| Link | Mass |
+|------|-----:|
+| hand base (`*_hand_mount`, incl. `*_base_link`) | **221.6 g** |
+| thumb metacarpal | 10 g |
+| thumb proximal | 50 g |
+| thumb distal | 12 g |
+| index proximal / distal | 9 g / 11 g |
+| middle proximal / distal | 9 g / 11 g |
+| ring proximal / distal | 9 g / 11 g |
+| pinky proximal / distal | 9 g / 11 g |
+| **finger links subtotal** | **152 g** |
+| **whole hand (base + fingers)** | **≈ 373.6 g** |
+
+(The whole G1 + 2 hands robot is **34.0 kg**; see the scene README for the
+graspable-object masses.)
+
+---
+
 ## 4. Actuator gains (kp / kd)
 
 The 6 driver joints per hand are MuJoCo **position servos**
