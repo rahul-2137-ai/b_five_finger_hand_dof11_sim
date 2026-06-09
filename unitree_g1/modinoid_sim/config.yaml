@@ -55,6 +55,32 @@ CAMERA_WRIST_NAMES: ["ego_view_left_mono", "ego_view_right_mono"]
 CAMERA_WRIST_RESOLUTION: [480, 640]   # [height, width] per wrist camera
 CAMERA_JPEG_QUALITY: 80
 
+# STEREO camera pair for a VR headset — mounted above ego_view, streamed on its
+# OWN ZMQ port. View with: python stereo_client.py   (defaults to port 5577)
+#
+# STEREO_PROJECTION:
+#   "equirect" -> true ~180 deg VR180: each eye renders a 5-face cubemap
+#                 (stL_*/stR_* cameras) warped to an equirectangular image.
+#   "pinhole"  -> the raw wide-FOV stereo_left/right cameras (no warp, <=~90 deg).
+STEREO_ENABLED: True
+# "pinhole" = plain rectilinear stereo (stereo_left/right cams, ~90 deg, tilted
+# down at the bench). CORRECT geometry on the headset's flat display -> sharp,
+# stereo fuses naturally, hands at the right depth. Use this for clear vision.
+# "equirect" = 180 deg VR180 fisheye; only looks right if the headset maps it onto
+# a SPHERE (Vuer's flat display can't, so it bends + depth feels wrong).
+STEREO_PROJECTION: "pinhole"
+STEREO_ZMQ_PORT: 5577
+STEREO_CAMERAS: ["stereo_left", "stereo_right"]   # published names (per eye)
+STEREO_FACE_PREFIXES: ["stL", "stR"]              # cube-face camera prefixes
+STEREO_FOV: [180.0, 180.0]            # equirect coverage [horizontal, vertical] deg
+STEREO_PITCH_DEG: 30.0                # tilt view DOWN N deg so "ahead" looks at the bench (human eye line); 0 = horizon
+STEREO_EQUIRECT_SIZE: [960, 960]      # [height, width] of the equirect image per eye (higher = sharper, slower)
+STEREO_FACE_SIZE: 512                 # per cube-face render size (sharpness driver; smaller = faster)
+STEREO_FPS: 30
+STEREO_JPEG_QUALITY: 90
+# (pinhole fallback only) per-eye size when STEREO_PROJECTION = "pinhole"
+STEREO_RESOLUTION: [720, 1280]
+
 # Simulation Timing
 SIMULATE_DT: 0.005
 VIEWER_DT: 0.02

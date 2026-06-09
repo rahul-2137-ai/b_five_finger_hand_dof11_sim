@@ -187,8 +187,36 @@
                Mounted on the head, looking forward (+X) with image-up = +Z.
                ego_view  = center RGB; *_mono = stereo pair offset ±3.2 cm in Y. -->
           <camera name="ego_view" pos="0.07 0 0.36"  euler="0 -0.80 -1.57" fovy="100"/>
-          
-         
+
+          <!-- ── Wide-FOV STEREO camera pair, mounted ABOVE the ego_view ──
+               Forward eyes tilted ~40 deg down (xyaxes up = (sin40,0,cos40)) so the
+               robot's front-down workspace is in view. 6.4 cm baseline. Streamed on
+               ZMQ port 5577 (see STEREO_* in config).
+               NOTE: MuJoCo cameras are PINHOLE — a true 180 deg fisheye is not
+               possible on the camera itself (it degenerates / crashes past ~100 deg).
+               fovy here is the per-eye source FOV; for a real ~180 deg fisheye the
+               stereo server warps a cubemap to equirectangular (STEREO_PROJECTION). -->
+          <camera name="stereo_left"  pos="0.10  0.032 0.45" xyaxes="0 -1 0 0.643 0 0.766" fovy="90"/>
+          <camera name="stereo_right" pos="0.10 -0.032 0.45" xyaxes="0 -1 0 0.643 0 0.766" fovy="90"/>
+
+          <!-- ── Cube-face cameras for the EQUIRECTANGULAR (VR180) stereo pipeline ──
+               5 faces per eye at the eye point, each a safe 90 deg pinhole. The
+               stereo server (PROJECTION=equirect) renders these and warps them to a
+               180x180 equirectangular image per eye. xyaxes give each face's exact
+               (right; up) in the torso frame so the warp LUT is well-defined:
+                 front +X | left +Y | right -Y | up +Z | down -Z. -->
+          <camera name="stL_front" pos="0.10  0.032 0.45" xyaxes="0 -1 0 0 0 1"  fovy="90"/>
+          <camera name="stL_left"  pos="0.10  0.032 0.45" xyaxes="1 0 0 0 0 1"   fovy="90"/>
+          <camera name="stL_right" pos="0.10  0.032 0.45" xyaxes="-1 0 0 0 0 1"  fovy="90"/>
+          <camera name="stL_up"    pos="0.10  0.032 0.45" xyaxes="0 1 0 1 0 0"   fovy="90"/>
+          <camera name="stL_down"  pos="0.10  0.032 0.45" xyaxes="0 1 0 -1 0 0"  fovy="90"/>
+          <camera name="stR_front" pos="0.10 -0.032 0.45" xyaxes="0 -1 0 0 0 1"  fovy="90"/>
+          <camera name="stR_left"  pos="0.10 -0.032 0.45" xyaxes="1 0 0 0 0 1"   fovy="90"/>
+          <camera name="stR_right" pos="0.10 -0.032 0.45" xyaxes="-1 0 0 0 0 1"  fovy="90"/>
+          <camera name="stR_up"    pos="0.10 -0.032 0.45" xyaxes="0 1 0 1 0 0"   fovy="90"/>
+          <camera name="stR_down"  pos="0.10 -0.032 0.45" xyaxes="0 1 0 -1 0 0"  fovy="90"/>
+
+
           <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.24778" quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
             <inertial pos="0 0.035892 -0.011628" quat="0.654152 0.0130458 -0.326267 0.68225" mass="0.718" diaginertia="0.000465864 0.000432842 0.000406394"/>
             <joint name="left_shoulder_pitch_joint" pos="0 0 0" axis="0 1 0" range="-3.0892 2.6704" actuatorfrcrange="-25 25"/>

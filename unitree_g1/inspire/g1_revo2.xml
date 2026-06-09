@@ -76,7 +76,7 @@
     <mesh name="right_pinky_touch_link" content_type="model/stl" file="revo2_right_hand/right_pinky_touch_link.STL" />
   </asset>
   <worldbody>
-    <body name="pelvis" pos="4.75 2.2 0.84" quat="0.747602 0 0 0.664147">
+    <body name="pelvis" pos="4.75 2.2 0.9" quat="0.747602 0 0 0.664147">
       <site name="imu" size="0.01" pos="-0.03959 -0.00224 0.13792" />
       <inertial pos="0 0 -0.07605" quat="1 0 -0.000399148 0" mass="3.813" diaginertia="0.010549 0.0093089 0.0079184" />
       <joint name="floating_base_joint" type="free" limited="false" actuatorfrclimited="false" />
@@ -179,6 +179,18 @@
             <geom pos="0.0039635 0 -0.044" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.2 0.2 0.2 1" mesh="head_link" />
             <geom pos="0.0039635 0 -0.044" type="mesh" rgba="0.2 0.2 0.2 1" mesh="head_link" />
             <camera name="ego_view" pos="0.07 0 0.36" euler="0 -0.80 -1.57" fovy="100" />
+            <camera name="stereo_left" pos="0.10  0.032 0.45" xyaxes="0 -1 0 0.643 0 0.766" fovy="90" />
+            <camera name="stereo_right" pos="0.10 -0.032 0.45" xyaxes="0 -1 0 0.643 0 0.766" fovy="90" />
+            <camera name="stL_front" pos="0.10  0.032 0.45" xyaxes="0 -1 0 0 0 1" fovy="90" />
+            <camera name="stL_left" pos="0.10  0.032 0.45" xyaxes="1 0 0 0 0 1" fovy="90" />
+            <camera name="stL_right" pos="0.10  0.032 0.45" xyaxes="-1 0 0 0 0 1" fovy="90" />
+            <camera name="stL_up" pos="0.10  0.032 0.45" xyaxes="0 1 0 1 0 0" fovy="90" />
+            <camera name="stL_down" pos="0.10  0.032 0.45" xyaxes="0 1 0 -1 0 0" fovy="90" />
+            <camera name="stR_front" pos="0.10 -0.032 0.45" xyaxes="0 -1 0 0 0 1" fovy="90" />
+            <camera name="stR_left" pos="0.10 -0.032 0.45" xyaxes="1 0 0 0 0 1" fovy="90" />
+            <camera name="stR_right" pos="0.10 -0.032 0.45" xyaxes="-1 0 0 0 0 1" fovy="90" />
+            <camera name="stR_up" pos="0.10 -0.032 0.45" xyaxes="0 1 0 1 0 0" fovy="90" />
+            <camera name="stR_down" pos="0.10 -0.032 0.45" xyaxes="0 1 0 -1 0 0" fovy="90" />
             <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.24778" quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
               <inertial pos="0 0.035892 -0.011628" quat="0.654152 0.0130458 -0.326267 0.68225" mass="0.718" diaginertia="0.000465864 0.000432842 0.000406394" />
               <joint name="left_shoulder_pitch_joint" pos="0 0 0" axis="0 1 0" range="-3.0892 2.6704" actuatorfrcrange="-25 25" />

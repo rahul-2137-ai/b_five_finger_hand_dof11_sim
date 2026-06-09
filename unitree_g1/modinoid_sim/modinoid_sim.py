@@ -1335,6 +1335,36 @@ class ModinoidSimulator:
         else:
             self.camera_server = None
 
+        # Separate HIGH-RES STEREO image server on its own ZMQ port (default 5577),
+        # for a VR headset. STEREO_PROJECTION:
+        #   "equirect" (default) -> StereoEquirectServer renders a 5-face cubemap
+        #        per eye and warps it to a 180x180 deg equirectangular (VR180) image.
+        #        This is the real ~180 deg wide view (MuJoCo pinhole can't do 180).
+        #   "pinhole"            -> the plain wide-FOV stereo_left/right cameras,
+        #        streamed as-is via SimCameraServer (no warp).
+        # Both publish {stereo_left, stereo_right} so stereo_client.py is unchanged.
+        if config.get("STEREO_ENABLED", False):
+            projection = config.get("STEREO_PROJECTION", "equirect")
+            if projection == "equirect":
+                from stereo_server import StereoEquirectServer
+                self.stereo_server = StereoEquirectServer(self.env.mj_model, config)
+            else:
+                from sim_camera_server import SimCameraServer
+                stereo_cams = config.get("STEREO_CAMERAS", ["stereo_left", "stereo_right"])
+                stereo_res = config.get("STEREO_RESOLUTION", [720, 1280])
+                stereo_cfg = dict(config)
+                stereo_cfg["CAMERA_ZMQ_PORT"] = config.get("STEREO_ZMQ_PORT", 5577)
+                stereo_cfg["CAMERA_JPEG_QUALITY"] = config.get("STEREO_JPEG_QUALITY", 92)
+                stereo_cfg["CAMERA_HEAD_NAME"] = stereo_cams[0]
+                stereo_cfg["CAMERA_HEAD_RESOLUTION"] = stereo_res
+                stereo_cfg["CAMERA_WRIST_NAMES"] = stereo_cams[1:]
+                stereo_cfg["CAMERA_WRIST_RESOLUTION"] = stereo_res
+                self.stereo_server = SimCameraServer(self.env.mj_model, stereo_cfg)
+            stereo_fps = config.get("STEREO_FPS", config.get("CAMERA_FPS", 10))
+            self.stereo_render_interval = max(1, int(1.0 / (stereo_fps * self.sim_dt)))
+        else:
+            self.stereo_server = None
+
     def run(self):
         """Main loop — runs until the viewer is closed or Ctrl-C."""
         sim_cnt = 0
@@ -1374,6 +1404,10 @@ class ModinoidSimulator:
                 if self.camera_server is not None and sim_cnt % self.camera_render_interval == 0:
                     self.camera_server.render_cameras(self.env.mj_data)
 
+                # Render the high-res stereo pair on its own port
+                if self.stereo_server is not None and sim_cnt % self.stereo_render_interval == 0:
+                    self.stereo_server.render_cameras(self.env.mj_data)
+
                 if sim_cnt % viewer_step == 0:
                     self.env.update_viewer()
 
@@ -1394,6 +1428,12 @@ class ModinoidSimulator:
                 self.env.viewer.close()
             except Exception:
                 pass
+        for srv in (getattr(self, "camera_server", None), getattr(self, "stereo_server", None)):
+            if srv is not None:
+                try:
+                    srv.close()
+                except Exception:
+                    pass
 
 
 # ═══════════════════════════════════════════════════════════════════════════
